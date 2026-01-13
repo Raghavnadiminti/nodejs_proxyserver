@@ -38,4 +38,4 @@ router.post("/ports/release", async (req, res) => {
 });
 
 
-module.exports = router;
+module.exports = {router};
