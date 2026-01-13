@@ -10,6 +10,7 @@ async function initPorts() {
 
   const freeExists = await redis.exists(FREE_KEY);
   const usedExists = await redis.exists(USED_KEY);
+  console.log(freeExists,usedExists)
   if (freeExists && usedExists) {
     console.log("Ports already initialized");
     return;
