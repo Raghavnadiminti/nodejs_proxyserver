@@ -44,6 +44,9 @@ app.use(
   createProxyMiddleware({
     target: "http://16.170.241.164:5000/api/getcode", 
     changeOrigin: true,
+    pathRewrite: {
+      "^/runcode": "/api/getcode",
+    },
     onProxyReq(proxyReq, req) {
       const body = {
         ...req.body,
@@ -54,6 +57,7 @@ app.use(
       proxyReq.setHeader("Content-Type", "application/json");
       proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyStr));
       proxyReq.write(bodyStr);
+      proxyReq.end();
     },
   })
 );
