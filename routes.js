@@ -30,8 +30,10 @@ router.post("/ports/release", async (req, res) => {
     if (!port) {
       return res.status(400).json({ message: "port is required" });
     }
-    await pushPort(port);
-    res.json({ message: `Port ${port} released` });
+  let k =   await pushPort(port);
+  if(k){ return res.json({ message: `Port ${port} released` });}
+  else{return res.json({"port not in use"})}
+   
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

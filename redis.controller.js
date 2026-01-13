@@ -38,9 +38,14 @@ async function popPort() {
 async function pushPort(port) {
   const redis = getRedis();
   const p = port.toString();
-  await redis.sRem(USED_KEY, p);
+  const removed = await redis.sRem(USED_KEY, p);
+  if (removed === 0) {
+    return false; 
+  }
   await redis.rPush(FREE_KEY, p);
+  return true;
 }
+
 
 async function addUsedPort(port) {
   const redis = getRedis();
