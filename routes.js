@@ -32,7 +32,7 @@ router.post("/ports/release", async (req, res) => {
     }
   let k =   await pushPort(port);
   if(k){ return res.json({ message: `Port ${port} released` });}
-  else{return res.json({"port not in use"})}
+  else{return res.json({message:"port not in use"})}
    
   } catch (err) {
     res.status(500).json({ error: err.message });
