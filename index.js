@@ -42,7 +42,7 @@ app.post("/runcode", async (req, res, next) => {
 app.use(
   "/runcode",
   createProxyMiddleware({
-    target: "http://localhost:5000", 
+    target: "http://localhost:6000", 
     changeOrigin: true,
     onProxyReq(proxyReq, req) {
       const body = {
