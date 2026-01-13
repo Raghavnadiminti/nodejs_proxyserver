@@ -3,9 +3,7 @@ const cors = require("cors");
 const { createProxyMiddleware, fixRequestBody } = require("http-proxy-middleware");
 const { router } = require("./routes");
 const { connectRedis } = require("./config");
-const {
-  assignPortToUser,initPorts
-} = require("./redis.controller");
+const { assignPortToUser, initPorts } = require("./redis.controller");
 const { allocatePort } = require("./controller");
 
 const app = express();
@@ -24,19 +22,19 @@ app.use(express.json());
 app.post("/runcode", async (req, res, next) => {
   try {
     const { userId } = req.body;
-
     if (!userId) return res.status(400).json({ error: "userId required" });
 
     const port = await allocatePort();
     await assignPortToUser(userId, port);
-    console.log(userId,port,"allocated")
 
-    req.allocatedPort = port;
+    console.log("Allocated:", userId, port);
+    req.body.port = port;  
     next();
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
+
 
 app.use(
   "/runcode",
@@ -46,33 +44,20 @@ app.use(
     pathRewrite: {
       "^/runcode": "/api/getcode",
     },
-
-    onProxyReq(proxyReq, req) {
-      const body = {
-        ...req.body,
-        port: req.allocatedPort,
-      };
-
-      const bodyStr = JSON.stringify(body);
-      proxyReq.setHeader("Content-Type", "application/json");
-      proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyStr));
-      proxyReq.write(bodyStr);
-      proxyReq.end();
-      console.log("sent ok na ")
-    },
-
-    onError(err, req, res) {
-      console.error("Proxy Error:", err.message);
-      if (!res.headersSent) {
-        res.status(502).json({
-          error: "Proxy failed",
-          details: err.message,
-        });
-      }
-    },
-
-    onProxyRes(proxyRes, req, res) {
-      console.log("Proxy response status:", proxyRes.statusCode);
+    on: {
+      proxyReq: fixRequestBody,   
+      proxyRes(proxyRes) {
+        console.log("Proxy response status:", proxyRes.statusCode);
+      },
+      error(err, req, res) {
+        console.error("Proxy Error:", err.message);
+        if (!res.headersSent) {
+          res.status(502).json({
+            error: "Proxy failed",
+            details: err.message,
+          });
+        }
+      },
     },
   })
 );
@@ -91,6 +76,7 @@ app.use("/api", router);
     process.exit(1);
   }
 })();
+
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");
