@@ -45,7 +45,10 @@ app.use(
       "^/runcode": "/api/getcode",
     },
     on: {
-      proxyReq: fixRequestBody,   
+    proxyReq(proxyReq, req) {
+    fixRequestBody(proxyReq, req); 
+    console.log(`Proxying ${req.method} ${req.originalUrl} → ${proxyReq.protocol}//${proxyReq.getHeader('host')}${proxyReq.path}`);
+  }, 
       proxyRes(proxyRes) {
         console.log("Proxy response status:", proxyRes.statusCode);
       },
