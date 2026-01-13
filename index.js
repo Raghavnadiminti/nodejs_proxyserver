@@ -29,6 +29,7 @@ app.post("/runcode", async (req, res, next) => {
 
     const port = await allocatePort();
     await assignPortToUser(userId, port);
+    console.log(userId,port,"allocated")
 
     req.allocatedPort = port;
     next();
