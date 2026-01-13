@@ -58,6 +58,7 @@ app.use(
       proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyStr));
       proxyReq.write(bodyStr);
       proxyReq.end();
+      console.log("sent ok na ")
     },
 
     onError(err, req, res) {
