@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { createProxyMiddleware } = require("http-proxy-middleware");
+const { createProxyMiddleware, fixRequestBody } = require("http-proxy-middleware");
 const { router } = require("./routes");
 const { connectRedis } = require("./config");
 const {
@@ -38,15 +38,15 @@ app.post("/runcode", async (req, res, next) => {
   }
 });
 
-
 app.use(
   "/runcode",
   createProxyMiddleware({
-    target: "http://16.170.241.164:5000", 
+    target: "http://16.170.241.164:5000",
     changeOrigin: true,
     pathRewrite: {
       "^/runcode": "/api/getcode",
     },
+
     onProxyReq(proxyReq, req) {
       const body = {
         ...req.body,
@@ -58,6 +58,20 @@ app.use(
       proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyStr));
       proxyReq.write(bodyStr);
       proxyReq.end();
+    },
+
+    onError(err, req, res) {
+      console.error("Proxy Error:", err.message);
+      if (!res.headersSent) {
+        res.status(502).json({
+          error: "Proxy failed",
+          details: err.message,
+        });
+      }
+    },
+
+    onProxyRes(proxyRes, req, res) {
+      console.log("Proxy response status:", proxyRes.statusCode);
     },
   })
 );
