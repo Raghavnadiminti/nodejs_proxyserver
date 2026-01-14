@@ -3,8 +3,10 @@ const cors = require("cors");
 const { createProxyMiddleware, fixRequestBody } = require("http-proxy-middleware");
 const { router } = require("./routes");
 const { connectRedis } = require("./config");
-const { assignPortToUser, initPorts } = require("./redis.controller");
-const { allocatePort } = require("./controller");
+const { assignPortToUser, initPorts,updateUserLastRun } = require("./redis.controller");
+const { allocatePort,deallocateport } = require("./controller");
+const cron = require("node-cron");
+const { cronCleanup } = require("./cron.controller");
 
 const app = express();
 
@@ -26,8 +28,9 @@ app.post("/runcode", async (req, res, next) => {
 
     const port = await allocatePort();
     await assignPortToUser(userId, port);
-
+    
     console.log("Allocated:", userId, port);
+    updateUserLastRun(userId)
     req.body.port = port;  
     next();
   } catch (err) {
@@ -51,6 +54,10 @@ app.use(
   }, 
       proxyRes(proxyRes) {
         console.log("Proxy response status:", proxyRes.statusCode);
+        if (proxyRes.statusCode < 200 || proxyRes.statusCode >= 300) {
+          if(req.body.port){ deallocateport(req.body.port) }
+           
+  }
       },
       error(err, req, res) {
         console.error("Proxy Error:", err.message);
@@ -66,6 +73,7 @@ app.use(
 );
 
 
+
 app.use("/api", router);
 
 
@@ -79,6 +87,26 @@ app.use("/api", router);
     process.exit(1);
   }
 })();
+
+
+
+
+
+
+
+cron.schedule("*/30 * * * *", async () => {
+  try {
+    console.log("Running cleanup job...");
+    await cronCleanup();
+  } catch (err) {
+    console.error("Cleanup job failed:", err);
+  }
+});
+
+
+
+
+
 
 
 app.listen(5000, () => {

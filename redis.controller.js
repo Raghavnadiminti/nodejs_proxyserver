@@ -70,19 +70,41 @@ async function getUsedPorts() {
   return await redis.sMembers(USED_KEY);
 }
 
+
 async function assignPortToUser(userId, port) {
   const redis = getRedis();
+  const existingPort = await redis.hGet("user:port", userId.toString());
+  if (existingPort) {
+    return existingPort;
+  }
   await redis.hSet("user:port", userId.toString(), port.toString());
+  return port;
 }
+
 
 async function removeUserPort(userId) {
   const redis = getRedis();
-  await redis.hDel("user:port", userId.toString());
+  const port = await redis.hGet("user:port", userId.toString());
+  if (port !== null) {
+    await redis.hDel("user:port", userId.toString());
+  }
+  return port; 
 }
+
 
 async function getPortByUser(userId) {
   const redis = getRedis();
   return await redis.hGet("user:port", userId.toString());
+}
+async function updateUserLastRun(userId) {
+  const redis = getRedis();
+  const now = Date.now(); 
+
+  await redis.hSet(
+    "user:lastRun",
+    userId.toString(),
+    now.toString()
+  );
 }
 
 module.exports = {
@@ -95,5 +117,7 @@ module.exports = {
   getUsedPorts,
   assignPortToUser,
   removeUsedPort,
-  getPortByUser
+  getPortByUser,
+  updateUserLastRun,
+  removeUserPort
 };
