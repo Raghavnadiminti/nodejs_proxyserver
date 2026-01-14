@@ -42,7 +42,7 @@ app.post("/runcode", async (req, res, next) => {
 app.use(
   "/runcode",
   createProxyMiddleware({
-    target: "http://16.170.241.164:5000/api/getcode",
+    target: "http://13.48.27.153:5000/api/getcode",
     changeOrigin: true,
     pathRewrite: {
       "^/runcode": "/api/getcode",
