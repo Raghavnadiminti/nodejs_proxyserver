@@ -71,15 +71,27 @@ async function getUsedPorts() {
 }
 
 
-async function assignPortToUser(userId, port) {
+async function allocatePortForUser(userId) {
   const redis = getRedis();
+
+ 
   const existingPort = await redis.hGet("user:port", userId.toString());
   if (existingPort) {
     return existingPort;
   }
+
+  
+  const port = await popPort();
+  if (!port) {
+    throw new Error("No ports available");
+  }
+
+ 
   await redis.hSet("user:port", userId.toString(), port.toString());
+
   return port;
 }
+
 
 
 async function removeUserPort(userId) {
@@ -87,6 +99,7 @@ async function removeUserPort(userId) {
   const port = await redis.hGet("user:port", userId.toString());
   if (port !== null) {
     await redis.hDel("user:port", userId.toString());
+    await pushPort(port)
   }
   return port; 
 }
@@ -115,7 +128,7 @@ module.exports = {
   removeUsedPort,
   getFreePorts,
   getUsedPorts,
-  assignPortToUser,
+  allocatePortForUser,
   removeUsedPort,
   getPortByUser,
   updateUserLastRun,

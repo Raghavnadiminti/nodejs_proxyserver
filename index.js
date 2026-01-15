@@ -3,7 +3,7 @@ const cors = require("cors");
 const { createProxyMiddleware, fixRequestBody } = require("http-proxy-middleware");
 const { router } = require("./routes");
 const { connectRedis } = require("./config");
-const { assignPortToUser, initPorts,updateUserLastRun } = require("./redis.controller");
+const { allocatePortForUser, initPorts,updateUserLastRun } = require("./redis.controller");
 const { allocatePort,deallocateport } = require("./controller");
 const cron = require("node-cron");
 const { cronCleanup } = require("./cron.controller");
@@ -26,9 +26,7 @@ app.post("/runcode", async (req, res, next) => {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
 
-    const port = await allocatePort();
-    await assignPortToUser(userId, port);
-    
+    const port = await allocatePortForUser(userId);    
     console.log("Allocated:", userId, port);
     updateUserLastRun(userId)
     req.body.port = port;  
@@ -55,7 +53,9 @@ app.use(
       proxyRes(proxyRes) {
         console.log("Proxy response status:", proxyRes.statusCode);
         if (proxyRes.statusCode < 200 || proxyRes.statusCode >= 300) {
-          if(req.body.port){ deallocateport(req.body.port) }
+          if(req.body.port){ deallocateport(req.body.port)
+            console.log("deallocated",req.body.port)
+           }
            
   }
       },
