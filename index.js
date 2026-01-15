@@ -61,7 +61,11 @@ app.use(
       },
       error(err, req, res) {
         console.error("Proxy Error:", err.message);
+         if(req.body.port){ deallocateport(req.body.port)
+            console.log("deallocated",req.body.port)
+           }
         if (!res.headersSent) {
+           
           res.status(502).json({
             error: "Proxy failed",
             details: err.message,
