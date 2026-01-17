@@ -29,7 +29,7 @@ async function cronCleanup() {
 
   if (images.length === 0) return;
 
-  await axios.post("http://16.171.249.204:5000/cleanup-images", {
+  await axios.post("http://13.60.194.172:5000/cleanup-images", {
     images: images,
   });
 
